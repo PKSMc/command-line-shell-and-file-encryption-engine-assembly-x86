@@ -1,0 +1,101 @@
+================================================================================
+01476105 Computer Organization and Assembly Language
+Computer Engineering and Cyber Security, KMITL
+Command-Line Shell & File Encryption Engine (Classical DES)
+================================================================================
+
+1. GROUP MEMBERS & RESPONSIBILITIES
+--------------------------------------------------------------------------------
+Name: [Your Name]
+Student ID: [Your Student ID]
+Responsibility: Module A - Shell Core & FSM Command Parser
+
+Name: [Teammate 1 Name]
+Student ID: [Teammate 1 Student ID]
+Responsibility: Module B - DES Key Schedule Generator
+
+Name: [Teammate 2 Name]
+Student ID: [Teammate 2 Student ID]
+Responsibility: Module C - DES 16-Round Feistel Core Engine
+
+Name: [Teammate 3 Name]
+Student ID: [Teammate 3 Student ID]
+Responsibility: Module D - Memory Dumper & Buffer Analytics
+
+
+2. SYSTEM REQUIREMENTS & BUILD ENVIRONMENT
+--------------------------------------------------------------------------------
+- Operating System: Windows 10 / Windows 11 (32-bit x86 Protected Mode)
+- Assembler: Microsoft Macro Assembler (ML.EXE v6.14 or later)
+- Linker: Microsoft Incremental Linker (LINK.EXE)
+- Required Library: Irvine32 Library (installed at C:\Irvine)
+
+
+3. COMPILATION & LINKING INSTRUCTIONS
+--------------------------------------------------------------------------------
+Open PowerShell or Command Prompt in the directory containing the source code, 
+then run the following commands:
+
+Step 1: Assemble the source file
+    ml.exe /c /coff .\module_a.asm
+
+Step 2: Link the object file with Irvine32 and Windows System libraries
+    link.exe /subsystem:console /LIBPATH:"C:\Irvine" .\module_a.obj Irvine32.lib Kernel32.lib User32.lib
+
+Step 3: Execute the compiled program
+    .\module_a.exe
+
+
+4. COMMAND REFERENCE & USAGE GUIDELINES
+--------------------------------------------------------------------------------
+The program runs an interactive Command-Line Shell (REPL loop) accepting the 
+following commands:
+
+1) KEYGEN <64-bit Hex Key>
+   - Generates and prints the 16 DES subkeys (K1...K16).
+   - Example:
+     DES-SHELL> KEYGEN 0x133457799BBCDFF1
+
+2) ENCRYPT <filename> <64-bit Hex Key>
+   - Encrypts the plaintext file using DES ECB mode with PKCS#7 padding and 
+     saves the output as <filename>.enc.
+   - Example:
+     DES-SHELL> ENCRYPT "secret.txt" 0x133457799BBCDFF1
+
+3) DECRYPT <filename> <64-bit Hex Key>
+   - Decrypts the DES encrypted file and removes PKCS#7 padding.
+   - Example:
+     DES-SHELL> DECRYPT "secret.txt.enc" 0x133457799BBCDFF1
+
+4) DUMP <filename>
+   - Displays 16-byte aligned Hexadecimal and ASCII memory dump with offsets.
+   - Example:
+     DES-SHELL> DUMP "secret.txt"
+
+5) STATS <filename>
+   - Calculates 256-bin byte frequency histogram and outputs top occurrences.
+   - Example:
+     DES-SHELL> STATS "secret.txt.enc"
+
+6) CLEAR
+   - Clears the console screen and resets the display.
+   - Example:
+     DES-SHELL> CLEAR
+
+7) EXIT
+   - Terminates the DES shell session cleanly.
+   - Example:
+     DES-SHELL> EXIT
+
+
+5. TECHNICAL HIGHLIGHTS & CONSTRAINT COMPLIANCE
+--------------------------------------------------------------------------------
+- Finite State Machine (FSM): High-level control directives (.IF, .WHILE, .REPEAT) 
+  are strictly avoided in compliance with project rules. Loops use low-level CMP, 
+  TEST, and conditional jumps (JE, JNE, JB, etc.).
+- Calling Convention: All procedures strictly follow C-style stack frame rules 
+  (push ebp / mov ebp, esp / pop ebp), register preservation, and pass return 
+  values through EAX.
+- String Parsing: Supports quoted paths (e.g., "secret.txt"), case-insensitive 
+  command evaluation, space/tab trimming, and 64-bit key validation.
+================================================================================
