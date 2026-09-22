@@ -6,92 +6,248 @@ INCLUDELIB C:\Irvine\Kernel32.lib
 INCLUDELIB C:\Irvine\User32.lib
 
 .data
-    format BYTE "[Address]  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  |  ASCII ", 0
-    line BYTE "-------------------------------------------------------------------------", 0
-    space BYTE " "
-    wall BYTE "|"
+
+hexTable    BYTE "0123456789ABCDEF"
+
+dumpHeader  BYTE "[Address]  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F | ASCII", 0
+dumpLine    BYTE "----------------------------------------------------------------", 0
 
 .code
+PrintHexByte PROC
+
+    push eax
+    push edx
+
+    ; -------------------------
+    ; พิมพ์ 4 bits ด้านบน
+    ; -------------------------
+    movzx edx, al
+    shr edx, 4
+
+    mov al, BYTE PTR hexTable[edx]
+    call WriteChar
+
+
+    ; -------------------------
+    ; พิมพ์ 4 bits ด้านล่าง
+    ; -------------------------
+    pop edx
+    pop eax
+
+    push eax
+    push edx
+
+    movzx edx, al
+    and edx, 0Fh
+
+    mov al, BYTE PTR hexTable[edx]
+    call WriteChar
+
+
+    pop edx
+    pop eax
+
+    ret
+
+PrintHexByte ENDP
+
+
 DisplayHexDump PROC
+
     pushad
 
-    ;Print format
-    mov edx, OFFSET format
+    ; --------------------------------
+    ; แสดง Header
+    ; --------------------------------
+    mov edx, OFFSET dumpHeader
     call WriteString
-    mov edx, OFFSET line
+    call Crlf
+
+    mov edx, OFFSET dumpLine
     call WriteString
+    call Crlf
 
-    ; ESI = pointer
-    ; ECX = length
 
-    mov esi, edx        ; EDX = address
-    mov ecx, eax        ; EAX = length
+    ; --------------------------------
+    ; EBX = Address / Offset
+    ; ESI = pointer ไปยัง buffer
+    ; ECX = จำนวน byte ที่เหลือ
+    ; --------------------------------
+    xor ebx, ebx
 
-DumpLoop:
+
+NextLine:
+
+    ; ไม่มีข้อมูลเหลือแล้ว
     cmp ecx, 0
     je DumpDone
 
-    ; แสดง offset address
-    mov eax, esi
+
+    ; --------------------------------
+    ; เก็บ address ของ byte ตัวแรก
+    ; ของบรรทัดนี้ไว้ใน EDI
+    ; --------------------------------
+    mov edi, esi
+
+
+    ; --------------------------------
+    ; Print Address
+    ; --------------------------------
+    mov eax, ebx
     call WriteHex
+
+    mov al, ' '
+    call WriteChar
+
+    mov al, ' '
+    call WriteChar
+
+
+    ; --------------------------------
+    ; EBP = จำนวน byte ในบรรทัดนี้
+    ; สูงสุด 16 byte
+    ; --------------------------------
+    xor ebp, ebp
+
+
+HexLoop:
+
+    ; ครบ 16 byte แล้ว
+    cmp ebp, 16
+    jae HexPadding
+
+    ; ไม่มี byte เหลือ
+    cmp ecx, 0
+    je HexPadding
+
+
+    ; --------------------------------
+    ; อ่าน byte จาก buffer
+    ; --------------------------------
+    mov al, BYTE PTR [esi]
+
+    ; พิมพ์ XX
+    call PrintHexByte
+
+    ; เว้นวรรค
+    mov al, ' '
+    call WriteChar
+
+
+    inc esi
+    dec ecx
+    inc ebp
+
+    jmp HexLoop
+
+
+    ; --------------------------------
+    ; ถ้า byte ไม่ครบ 16
+    ; เติมช่องว่างให้ ASCII ตรงตำแหน่ง
+    ; --------------------------------
+HexPadding:
+
+    cmp ebp, 16
+    je PrintASCII
+
+    mov eax, 16
+    sub eax, ebp
+
+PaddingLoop:
+
+    cmp eax, 0
+    je PrintASCII
+
+    mov al, ' '
+    call WriteChar
+
+    mov al, ' '
+    call WriteChar
+
+    mov al, ' '
+    call WriteChar
+
+    dec eax
+
+    jmp PaddingLoop
+
+
+    ; --------------------------------
+    ; Print ASCII
+    ; --------------------------------
+PrintASCII:
+
+    mov al, '|'
+    call WriteChar
+
+    mov al, ' '
+    call WriteChar
+
+
+    ; ESI ตอนนี้อยู่ท้าย buffer
+    ; กลับไปที่ byte แรกของบรรทัด
+    mov esi, edi
+
+    ; จำนวน byte ในบรรทัด
+    mov eax, ebp
+
+
+ASCII_Loop:
+
+    cmp eax, 0
+    je EndLine
+
+
+    ; อ่าน byte
+    mov dl, BYTE PTR [esi]
+
+    ; ตรวจว่าเป็น printable ASCII หรือไม่
+    cmp dl, 20h
+    jb NotPrintable
+
+    cmp dl, 7Eh
+    ja NotPrintable
+
+
+    ; Printable
+    mov al, dl
+    call WriteChar
+
+    jmp NextASCII
+
+
+NotPrintable:
+
+    mov al, '.'
+    call WriteChar
+
+
+NextASCII:
+
+    inc esi
+    dec eax
+
+    jmp ASCII_Loop
+
+
+    ; --------------------------------
+    ; จบบรรทัด
+    ; --------------------------------
+EndLine:
+
     call Crlf
 
-    ; แสดง byte
-    mov al, [esi]
-    ; ดูว่าค่าเข้าข่ายตามนี้ 20h <= [esi] <= 7Eh
-    cmp al, 20h
-    jb NotPrintable
-    cmp al, 7Eh
-    ja NotPrintable
-    
-    ;ปริ้นค่าเป็นเลขฐาน 16 จาก al
-    call WriteHex 
-    
-    ;ปริ้นค่าเป็น ASCII จาก dl
-    mov dl, al
-    call WriteChar
-    jmp Continue
+    ; --------------------------------
+    ; Address เพิ่มตามจำนวน byte
+    ; --------------------------------
+    add ebx, ebp
 
-    NotPrintable:
-    mov dl, '.'
-    call WriteChar
+    jmp NextLine
 
-    Continue:
-    ; ไป byte ถัดไป
-    inc esi
-    dec ecx
-
-    jmp DumpLoop
 
 DumpDone:
+
     popad
     ret
+
 DisplayHexDump ENDP
-
-ComputeBufferStats PROC
-    pushad
-
-    ; ESI = input buffer
-    ; ECX = buffer length
-
-    mov esi, edx
-    mov ecx, eax
-
-CountLoop:
-    cmp ecx, 0
-    je CountDone
-
-    xor ebx, ebx
-    mov bl, [esi]          ; BL = byte ที่อ่านมา
-
-    inc histogram[ebx*4]   ; histogram[byte]++
-
-    inc esi
-    dec ecx
-
-    jmp CountLoop
-
-CountDone:
-    popad
-    ret
-ComputeBufferStats ENDP
