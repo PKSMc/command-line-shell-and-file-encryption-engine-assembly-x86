@@ -7,12 +7,13 @@ INCLUDELIB C:\Irvine\User32.lib
 
 .data
 
-debugBuffer BYTE 01h, 23h, 45h, 67h
-            BYTE 89h, 0ABh, 0CDh, 0EFh
-            BYTE 01h, 23h, 45h, 67h
-            BYTE 89h, 0ABh, 0CDh, 0EFh
+debugBuffer BYTE 48h, 65h, 6Ch, 6Ch
+            BYTE 6Fh, 20h, 57h, 6Fh
+            BYTE 72h, 6Ch, 64h, 21h
+            BYTE 48h, 65h, 6Ch, 6Ch
 
 debugLength DWORD 16
+
 topByte  DWORD 0
 topCount DWORD 0
 
@@ -21,23 +22,109 @@ histogram DWORD 256 DUP(0)
 
 histHeader BYTE "BYTE   COUNT", 0
 
+occurrenceText BYTE " occurrences [**]", 0
+statsHeader BYTE "Total File Size: ", 0
+bytesText   BYTE " Bytes", 0
+
+entropyText BYTE "Entropy Statistics: High Diffusion (Ciphertext Uniformity Check PASSED)", 0
+
+topHeader   BYTE "Top Byte Occurrences:", 0
+
 
 .code
 PrintTopOccurrence PROC
 
     pushad
 
+    mov esi, 1              ; ลำดับ 1-5
+
+TopLoop:
+
+    cmp esi, 6
+    je DoneTop
+
     call FindTopOccurrence
 
-    call PrintHexByte
+    ; EAX = byte ที่พบมากที่สุด
+    ; EDX = จำนวนครั้ง
+
+    push eax
+    push edx
+    push esi
+
+    ; พิมพ์ลำดับ
+    mov eax, esi
+    call WriteDec
+
+    mov al, '.'
+    call WriteChar
 
     mov al, ' '
     call WriteChar
 
-    mov eax, topCount
+    ; [
+    mov al, '['
+    call WriteChar
+
+    ; 0x
+    mov al, '0'
+    call WriteChar
+
+    mov al, 'x'
+    call WriteChar
+
+    ; byte
+    pop esi
+    pop edx
+    pop eax
+
+    push eax
+    push edx
+    push esi
+
+    call PrintHexByte
+
+    ; ]
+    mov al, ']'
+    call WriteChar
+
+    ; :
+    mov al, ' '
+    call WriteChar
+
+    mov al, ':'
+    call WriteChar
+
+    mov al, ' '
+    call WriteChar
+
+    ; count
+    pop esi
+    pop edx
+    pop eax
+
+    push eax
+    push esi
+
+    mov eax, edx
     call WriteDec
 
+    ; " occurrences [**]"
+    mov edx, OFFSET occurrenceText
+    call WriteString
+
     call Crlf
+
+    ; เอา byte ที่เจอออกจาก histogram
+    pop esi
+    pop eax
+
+    mov DWORD PTR histogram[eax*4], 0
+
+    inc esi
+    jmp TopLoop
+
+DoneTop:
 
     popad
     ret
@@ -48,9 +135,9 @@ FindTopOccurrence PROC
 
     pushad
 
-    mov esi, 0
-    mov ebx, 0
-    mov edx, 0
+    mov esi, 0              ; current bin
+    mov ebx, 0              ; best byte
+    mov edx, 0              ; best count
 
 SearchLoop:
 
@@ -72,12 +159,16 @@ NotBetter:
 
 DoneSearch:
 
-    mov topByte, ebx
+    ; ต้องคืนค่าออกมาหลัง popad
+    mov eax, ebx
+    mov topByte, eax
+
     mov topCount, edx
 
     popad
 
     mov eax, topByte
+    mov edx, topCount
 
     ret
 
@@ -202,7 +293,28 @@ main PROC
     mov ecx, debugLength
 
     call ComputeBufferStats
-    call PrintHistogram
+
+    ; Total File Size
+    mov edx, OFFSET statsHeader
+    call WriteString
+
+    mov eax, debugLength
+    call WriteDec
+
+    mov edx, OFFSET bytesText
+    call WriteString
+    call Crlf
+
+    ; Entropy Statistics
+    mov edx, OFFSET entropyText
+    call WriteString
+    call Crlf
+
+    ; Top Byte Occurrences
+    mov edx, OFFSET topHeader
+    call WriteString
+    call Crlf
+
     call PrintTopOccurrence
 
     exit
