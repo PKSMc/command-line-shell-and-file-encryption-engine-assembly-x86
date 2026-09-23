@@ -253,7 +253,7 @@ DisplayHexDump ENDP
 main PROC
 
     mov esi, OFFSET debugBuffer
-    mov ecx, LENGTHOF debugLength
+    mov ecx, debugLength
 
     call DisplayHexDump
 
