@@ -7,6 +7,13 @@ INCLUDELIB C:\Irvine\User32.lib
 
 .data
 
+debugBuffer BYTE 01h, 23h, 45h, 67h
+            BYTE 89h, 0ABh, 0CDh, 0EFh
+            BYTE 01h, 23h, 45h, 67h
+            BYTE 89h, 0ABh, 0CDh, 0EFh
+
+debugLength DWORD 16
+
 hexTable    BYTE "0123456789ABCDEF"
 
 dumpHeader  BYTE "[Address]  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F | ASCII", 0
@@ -50,7 +57,6 @@ PrintHexByte PROC
     ret
 
 PrintHexByte ENDP
-
 
 DisplayHexDump PROC
 
@@ -146,7 +152,6 @@ HexLoop:
     ; เติมช่องว่างให้ ASCII ตรงตำแหน่ง
     ; --------------------------------
 HexPadding:
-
     cmp ebp, 16
     je PrintASCII
 
@@ -154,23 +159,21 @@ HexPadding:
     sub eax, ebp
 
 PaddingLoop:
-
     cmp eax, 0
     je PrintASCII
 
-    mov al, ' '
-    call WriteChar
+    push eax
 
     mov al, ' '
     call WriteChar
-
     mov al, ' '
     call WriteChar
+    mov al, ' '
 
+    pop eax
     dec eax
 
     jmp PaddingLoop
-
 
     ; --------------------------------
     ; Print ASCII
@@ -189,44 +192,39 @@ PrintASCII:
     mov esi, edi
 
     ; จำนวน byte ในบรรทัด
-    mov eax, ebp
-
+   mov eax, ebp
+push eax
 
 ASCII_Loop:
-
+    pop eax
     cmp eax, 0
     je EndLine
 
+    push eax
 
-    ; อ่าน byte
     mov dl, BYTE PTR [esi]
 
-    ; ตรวจว่าเป็น printable ASCII หรือไม่
     cmp dl, 20h
     jb NotPrintable
 
     cmp dl, 7Eh
     ja NotPrintable
 
-
-    ; Printable
     mov al, dl
     call WriteChar
-
     jmp NextASCII
 
-
 NotPrintable:
-
     mov al, '.'
     call WriteChar
 
-
 NextASCII:
-
     inc esi
+
+    pop eax
     dec eax
 
+    push eax
     jmp ASCII_Loop
 
 
@@ -251,3 +249,16 @@ DumpDone:
     ret
 
 DisplayHexDump ENDP
+
+main PROC
+
+    mov esi, OFFSET debugBuffer
+    mov ecx, LENGTHOF debugLength
+
+    call DisplayHexDump
+
+    exit
+
+main ENDP
+
+END main
