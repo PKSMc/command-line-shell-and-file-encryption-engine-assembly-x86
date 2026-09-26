@@ -32,6 +32,44 @@ topHeader   BYTE "Top Byte Occurrences:", 0
 
 
 .code
+PrintHexByte PROC
+
+    push eax
+    push edx
+
+    ; -------------------------
+    ; พิมพ์ 4 bits ด้านบน
+    ; -------------------------
+    movzx edx, al
+    shr edx, 4
+
+    mov al, BYTE PTR hexTable[edx]
+    call WriteChar
+
+
+    ; -------------------------
+    ; พิมพ์ 4 bits ด้านล่าง
+    ; -------------------------
+    pop edx
+    pop eax
+
+    push eax
+    push edx
+
+    movzx edx, al
+    and edx, 0Fh
+
+    mov al, BYTE PTR hexTable[edx]
+    call WriteChar
+
+
+    pop edx
+    pop eax
+
+    ret
+
+PrintHexByte ENDP
+
 PrintTopOccurrence PROC
 
     pushad
@@ -201,44 +239,6 @@ DoneCounting:
     ret
 
 ComputeBufferStats ENDP
-
-PrintHexByte PROC
-
-    push eax
-    push edx
-
-    ; -------------------------
-    ; พิมพ์ 4 bits ด้านบน
-    ; -------------------------
-    movzx edx, al
-    shr edx, 4
-
-    mov al, BYTE PTR hexTable[edx]
-    call WriteChar
-
-
-    ; -------------------------
-    ; พิมพ์ 4 bits ด้านล่าง
-    ; -------------------------
-    pop edx
-    pop eax
-
-    push eax
-    push edx
-
-    movzx edx, al
-    and edx, 0Fh
-
-    mov al, BYTE PTR hexTable[edx]
-    call WriteChar
-
-
-    pop edx
-    pop eax
-
-    ret
-
-PrintHexByte ENDP
 
 PrintHistogram PROC
 

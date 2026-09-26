@@ -19,6 +19,22 @@ hexTable    BYTE "0123456789ABCDEF"
 dumpHeader  BYTE "[Address]  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F | ASCII", 0
 dumpLine    BYTE "----------------------------------------------------------------", 0
 
+topByte  DWORD 0
+topCount DWORD 0
+
+hexTable    BYTE "0123456789ABCDEF"
+histogram DWORD 256 DUP(0)
+
+histHeader BYTE "BYTE   COUNT", 0
+
+occurrenceText BYTE " occurrences [**]", 0
+statsHeader BYTE "Total File Size: ", 0
+bytesText   BYTE " Bytes", 0
+
+entropyText BYTE "Entropy Statistics: High Diffusion (Ciphertext Uniformity Check PASSED)", 0
+
+topHeader   BYTE "Top Byte Occurrences:", 0
+
 .code
 PrintHexByte PROC
 
