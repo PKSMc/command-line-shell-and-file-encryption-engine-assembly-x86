@@ -7,15 +7,6 @@ INCLUDELIB C:\Irvine\User32.lib
 
 .data
 
-debugBuffer BYTE 01h, 23h, 45h, 67h
-            BYTE 89h, 0ABh, 0CDh, 0EFh
-            BYTE 01h, 23h, 45h, 67h
-            BYTE 89h, 0ABh, 0CDh, 0EFh
-
-debugLength DWORD 16
-
-hexTable    BYTE "0123456789ABCDEF"
-
 dumpHeader  BYTE "[Address]  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F | ASCII", 0
 dumpLine    BYTE "----------------------------------------------------------------", 0
 
@@ -266,15 +257,4 @@ DumpDone:
 
 DisplayHexDump ENDP
 
-main PROC
-
-    mov esi, OFFSET debugBuffer
-    mov ecx, debugLength
-
-    call DisplayHexDump
-
-    exit
-
-main ENDP
-
-END main
+END

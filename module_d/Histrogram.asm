@@ -7,13 +7,6 @@ INCLUDELIB C:\Irvine\User32.lib
 
 .data
 
-debugBuffer BYTE 48h, 65h, 6Ch, 6Ch
-            BYTE 6Fh, 20h, 57h, 6Fh
-            BYTE 72h, 6Ch, 64h, 21h
-            BYTE 48h, 65h, 6Ch, 6Ch
-
-debugLength DWORD 16
-
 topByte  DWORD 0
 topCount DWORD 0
 
@@ -287,37 +280,4 @@ DonePrint:
 
 PrintHistogram ENDP
 
-main PROC
-
-    mov esi, OFFSET debugBuffer
-    mov ecx, debugLength
-
-    call ComputeBufferStats
-
-    ; Total File Size
-    mov edx, OFFSET statsHeader
-    call WriteString
-
-    mov eax, debugLength
-    call WriteDec
-
-    mov edx, OFFSET bytesText
-    call WriteString
-    call Crlf
-
-    ; Entropy Statistics
-    mov edx, OFFSET entropyText
-    call WriteString
-    call Crlf
-
-    ; Top Byte Occurrences
-    mov edx, OFFSET topHeader
-    call WriteString
-    call Crlf
-
-    call PrintTopOccurrence
-
-    exit
-
-main ENDP
-END main
+END
